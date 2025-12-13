@@ -72,6 +72,7 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Investor Dashboard - RxHub</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../assets/css/rxhub-theme.css">
     <style>
         :root {
             --primary: #9900cc;
@@ -507,5 +508,5 @@ try {
                         <small style="color: var(--gray); display: block; margin-top: 8px;">
                             Min: $<span id="minAmount">0</span> - Max: $<span id="maxAmount">0</span>
                         </small>
-                                <link rel="stylesheet" href="../assets/css/rxhub-theme.css">
+                    </div>
                     <div class="form-group">

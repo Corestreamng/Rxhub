@@ -56,12 +56,22 @@ rxhub/
 ├── user/                     # Healthcare provider portal
 │   ├── dashboard.php         # User dashboard
 │   ├── login.php             # User login
-│   └── signup.php            # User registration
+│   ├── signup.php            # User registration
+│   └── sections/             # Dashboard sections
+│       ├── products.php      # Product listing
+│       ├── orders.php        # Order management
+│       ├── invoices.php      # Invoice viewing
+│       ├── payments.php      # Payment history
+│       ├── reports.php       # Sales reports
+│       ├── analytics.php     # Analytics dashboard
+│       ├── profile.php       # User profile
+│       └── settings.php      # User settings
 │
 ├── includes/                 # Core PHP files
 │   ├── config.php            # Application configuration
 │   ├── database.php          # Database connection class
 │   ├── session.php           # Session management
+│   ├── security.php          # Security functions and classes
 │   ├── auth.php              # Authentication functions
 │   ├── helpers.php           # Utility functions
 │   └── init.php              # Bootstrap file
@@ -83,8 +93,13 @@ rxhub/
 │
 ├── templates/                # Email and document templates
 │
+├── logs/                     # Application logs
+│   └── security.log          # Security event logs
+│
 ├── index.php                 # Landing page
 ├── logout.php                # Logout handler
+├── API.md                    # API documentation
+├── SECURITY.md               # Security documentation
 └── README.md                 # This file
 ```
 
@@ -203,29 +218,50 @@ Use the admin panel to create test healthcare users and investors, or register t
 
 ## 🔒 Security Features
 
-- Password hashing using `password_hash()` with bcrypt
-- Prepared statements for all database queries (SQL injection prevention)
-- XSS protection with `htmlspecialchars()` output encoding
-- CSRF protection for forms
-- Secure session management
-- Input validation and sanitization
+- **Password Security**: Argon2ID hashing with high memory and time costs
+- **SQL Injection Prevention**: Prepared statements for all database queries
+- **XSS Protection**: Output encoding and Content Security Policy headers
+- **CSRF Protection**: Token-based protection for all forms
+- **Session Security**: Secure session handling with HTTPOnly and Secure flags
+- **Rate Limiting**: 100 requests per minute per IP address
+- **Account Lockout**: Automatic lockout after 5 failed login attempts
+- **JWT Authentication**: Secure token-based auth for mobile apps
+- **Security Headers**: X-Frame-Options, HSTS, CSP, and more
+- **Input Validation**: Comprehensive validation and sanitization
+- **Security Logging**: All security events logged for auditing
+
+For detailed security information, see [SECURITY.md](SECURITY.md)
 
 ## 🛠️ API Endpoints
 
+The RxHub API provides comprehensive REST endpoints for web and mobile applications.
+
+**Full API documentation:** [API.md](API.md)
+
+### Quick Reference
+- **Authentication**: Login, register, JWT tokens, refresh tokens
+- **Products**: Browse products, search, filter by category
+- **Orders**: Create orders, get order details, order history
+- **Payments**: Process payments, payment history
+- **Invoices**: View invoices, download PDFs
+- **Analytics**: User analytics, spending trends
+- **Investments**: Browse opportunities, make investments
+
 ### Authentication
-- `POST /api/auth/login.php` - User login
-- `POST /api/auth/register.php` - User registration
-- `GET /logout.php` - Logout
+All API requests (except login/register) require authentication via:
+- **Web**: Session-based authentication
+- **Mobile**: JWT Bearer token in Authorization header
 
-### Orders
-- `POST /api/process_order.php` - Create order
-- `POST /api/process_payment.php` - Process payment
+### Example Request
+```bash
+curl -X GET https://rxhub.com.ng/api/products.php \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json"
+```
 
-### Admin APIs
-- `POST /api/admin/users.php` - User management
-- `POST /api/admin/products.php` - Product management
-- `POST /api/admin/investments.php` - Investment management
-- `POST /api/admin/settings.php` - Settings management
+### Rate Limiting
+- 100 requests per minute per IP
+- 1000 requests per hour per authenticated user
 
 ## 🎨 Customization
 

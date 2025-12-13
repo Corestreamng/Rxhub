@@ -133,7 +133,21 @@ try {
                 case 'invoices':
                     include __DIR__ . '/sections/invoices.php';
                     break;
-                // Add more cases for other sections as needed
+                case 'payments':
+                    include __DIR__ . '/sections/payments.php';
+                    break;
+                case 'reports':
+                    include __DIR__ . '/sections/reports.php';
+                    break;
+                case 'analytics':
+                    include __DIR__ . '/sections/analytics.php';
+                    break;
+                case 'profile':
+                    include __DIR__ . '/sections/profile.php';
+                    break;
+                case 'settings':
+                    include __DIR__ . '/sections/settings.php';
+                    break;
                 case 'dashboard':
                 default:
                     // Show dashboard stats only

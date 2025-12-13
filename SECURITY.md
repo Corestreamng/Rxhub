@@ -121,6 +121,16 @@ DB_PASS=strong_secure_password_here
 JWT_SECRET=very_long_random_secret_key_here
 ```
 
+**Important:** Generate a secure JWT secret with at least 64 characters:
+```bash
+# Generate a secure random JWT secret
+php -r "echo bin2hex(random_bytes(32)) . PHP_EOL;"
+# Or use OpenSSL
+openssl rand -hex 32
+```
+
+**CRITICAL:** The application will throw an exception if JWT_SECRET is not set when JWT functions are used. This is intentional to prevent using insecure default secrets in production.
+
 ### Server Configuration
 
 #### Apache (.htaccess)

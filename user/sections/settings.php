@@ -212,11 +212,36 @@ function exportData() {
 }
 
 function confirmDeleteAccount() {
-    if (confirm('WARNING: This action is permanent!\n\nAre you sure you want to delete your account?\n\nAll your data will be permanently removed and cannot be recovered.')) {
-        if (confirm('Final confirmation: Type DELETE to confirm account deletion')) {
-            // Handle account deletion
-            window.location.href = '../api/delete_account.php';
-        }
+    // Create a proper confirmation modal
+    const confirmation = prompt('WARNING: This action is PERMANENT and CANNOT be undone!\n\nTo confirm account deletion, type DELETE in all caps:');
+    
+    if (confirmation === 'DELETE') {
+        // Send deletion request with CSRF protection
+        fetch('../api/delete_account.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                confirm_delete: 'DELETE',
+                csrf_token: '<?php echo Security::generateCSRFToken(); ?>'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Account deleted successfully. You will be redirected to the home page.');
+                window.location.href = '../index.php';
+            } else {
+                alert('Error: ' + (data.message || 'Failed to delete account'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting your account. Please try again.');
+        });
+    } else if (confirmation !== null) {
+        alert('Account deletion cancelled. You must type DELETE exactly to confirm.');
     }
 }
 </script>

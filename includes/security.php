@@ -40,6 +40,13 @@ class Security {
     
     /**
      * Rate limiting check
+     * 
+     * NOTE: This implementation uses PHP sessions for simplicity in single-server environments.
+     * For production environments with load balancing or multiple servers, implement one of:
+     * - Redis/Memcached for shared rate limit tracking
+     * - Database-based rate limiting
+     * - API Gateway rate limiting (AWS API Gateway, Kong, etc.)
+     * 
      * @param string $key Unique identifier (e.g., IP address, user ID)
      * @param int $max_attempts Maximum allowed attempts
      * @param int $time_window Time window in seconds
@@ -48,7 +55,11 @@ class Security {
     public static function checkRateLimit($key, $max_attempts = 100, $time_window = 60) {
         $cache_key = 'rate_limit_' . md5($key);
         
-        // Get current attempts from session (in production, use Redis/Memcached)
+        // TODO: In production with load balancers, replace session storage with:
+        // - Redis: $redis->incr($cache_key); $redis->expire($cache_key, $time_window);
+        // - Database: Store rate limit data in dedicated table with indexed columns
+        
+        // Get current attempts from session (single-server implementation)
         if (!isset($_SESSION[$cache_key])) {
             $_SESSION[$cache_key] = [
                 'attempts' => 0,
@@ -69,6 +80,7 @@ class Security {
         
         // Check if limit exceeded
         if ($rate_data['attempts'] >= $max_attempts) {
+            self::logSecurityEvent('RATE_LIMIT_EXCEEDED', "Key: $key, Attempts: {$rate_data['attempts']}", 'WARNING');
             return false;
         }
         
@@ -274,10 +286,14 @@ class Security {
     
     /**
      * Generate JWT token for API authentication
+     * @throws Exception if JWT_SECRET is not configured
      */
     public static function generateJWT($payload, $secret_key = null) {
         if ($secret_key === null) {
-            $secret_key = getenv('JWT_SECRET') ?: 'your-secret-key-change-in-production';
+            $secret_key = getenv('JWT_SECRET');
+            if (empty($secret_key)) {
+                throw new Exception('JWT_SECRET environment variable must be configured. Generate a secure random key and set it in your environment.');
+            }
         }
         
         $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
@@ -295,10 +311,14 @@ class Security {
     
     /**
      * Verify and decode JWT token
+     * @throws Exception if JWT_SECRET is not configured
      */
     public static function verifyJWT($jwt, $secret_key = null) {
         if ($secret_key === null) {
-            $secret_key = getenv('JWT_SECRET') ?: 'your-secret-key-change-in-production';
+            $secret_key = getenv('JWT_SECRET');
+            if (empty($secret_key)) {
+                throw new Exception('JWT_SECRET environment variable must be configured. Generate a secure random key and set it in your environment.');
+            }
         }
         
         $tokenParts = explode('.', $jwt);

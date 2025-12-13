@@ -31,6 +31,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
+
+    // CSRF token generation
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    $csrf_token = $_SESSION['csrf_token'];
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // CSRF token validation
+        if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+            $error = 'Invalid CSRF token. Please refresh and try again.';
+        } else {
+            $email = filter_var(trim($_POST['email'] ?? ''), FILTER_VALIDATE_EMAIL);
+            $password = $_POST['password'] ?? '';
+            $auth = new Auth();
+            $result = $auth->loginUser($email, $password);
+            if ($result['success']) {
+                header('Location: dashboard.php');
+                exit();
+            } else {
+                $error = $result['message'];
+            }
+        }
+    }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -256,6 +280,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
             
             <form method="POST" action="">
+                <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <div class="form-group">
                     <label for="email">Email Address</label>
                     <input type="email" id="email" name="email" placeholder="your@email.com" required autofocus>

@@ -19,7 +19,10 @@ $investor_name = h(Session::get('investor_name'));
 $db = Database::getInstance();
 
 // Get current section
-$section = isset($_GET['section']) ? $_GET['section'] : 'dashboard';
+
+// Sanitize section input
+$allowed_sections = ['dashboard', 'opportunities', 'portfolio', 'returns', 'statements', 'history', 'support', 'faq', 'profile', 'settings'];
+$section = isset($_GET['section']) && in_array($_GET['section'], $allowed_sections) ? $_GET['section'] : 'dashboard';
 
 // Fetch data
 $investment_options = [];
@@ -357,7 +360,17 @@ try {
         <div class="content">
             <div class="alert success" id="successAlert"></div>
             <div class="alert error" id="errorAlert"></div>
-            
+            <?php
+            // Section router
+            switch ($section) {
+                case 'statements':
+                    include __DIR__ . '/sections/statements.php';
+                    break;
+                // Add more cases for other sections as needed
+                case 'dashboard':
+                default:
+                    // Show dashboard stats and main sections only
+            ?>
             <!-- Stats Cards - 4 Different Colors -->
             <div class="stats-grid">
                 <div class="stat-card purple">
@@ -383,7 +396,6 @@ try {
                     <p>Open Opportunities</p>
                 </div>
             </div>
-            
             <!-- Investment Opportunities -->
             <div class="section-card">
                 <div class="section-header"><h2><i class="fas fa-rocket"></i> Investment Opportunities</h2></div>
@@ -438,7 +450,6 @@ try {
                 </div>
                 <?php endif; ?>
             </div>
-            
             <!-- My Investments -->
             <div class="section-card">
                 <div class="section-header"><h2><i class="fas fa-briefcase"></i> My Portfolio</h2></div>
@@ -469,6 +480,10 @@ try {
                 </table>
                 <?php endif; ?>
             </div>
+            <?php
+                    break;
+            }
+            ?>
         </div>
     </div>
     
@@ -492,63 +507,5 @@ try {
                         <small style="color: var(--gray); display: block; margin-top: 8px;">
                             Min: $<span id="minAmount">0</span> - Max: $<span id="maxAmount">0</span>
                         </small>
-                    </div>
+                                <link rel="stylesheet" href="../assets/css/rxhub-theme.css">
                     <div class="form-group">
-                        <label for="investNotes">Notes (Optional)</label>
-                        <input type="text" name="notes" id="investNotes" placeholder="Any additional information">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeInvestModal()">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Confirm Investment</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <script>
-        function openInvestModal(id, title, min, max) {
-            document.getElementById('modalInvestmentId').value = id;
-            document.getElementById('modalInvestmentTitle').value = title;
-            document.getElementById('investAmount').min = min;
-            document.getElementById('investAmount').max = max;
-            document.getElementById('investAmount').value = min;
-            document.getElementById('minAmount').textContent = min.toLocaleString();
-            document.getElementById('maxAmount').textContent = max.toLocaleString();
-            document.getElementById('investModal').classList.add('active');
-        }
-        
-        function closeInvestModal() {
-            document.getElementById('investModal').classList.remove('active');
-            document.getElementById('investForm').reset();
-        }
-        
-        document.getElementById('investModal').addEventListener('click', function(e) {
-            if (e.target === this) closeInvestModal();
-        });
-        
-        document.getElementById('investForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            fetch('../api/process_investment.php', { method: 'POST', body: formData })
-            .then(response => response.json())
-            .then(data => {
-                closeInvestModal();
-                if (data.success) {
-                    document.getElementById('successAlert').textContent = data.message;
-                    document.getElementById('successAlert').style.display = 'block';
-                    setTimeout(() => { window.location.reload(); }, 2000);
-                } else {
-                    document.getElementById('errorAlert').textContent = data.message;
-                    document.getElementById('errorAlert').style.display = 'block';
-                    setTimeout(() => { document.getElementById('errorAlert').style.display = 'none'; }, 5000);
-                }
-            })
-            .catch(error => {
-                document.getElementById('errorAlert').textContent = 'An error occurred. Please try again.';
-                document.getElementById('errorAlert').style.display = 'block';
-            });
-        });
-    </script>
-</body>
-</html>

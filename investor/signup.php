@@ -14,34 +14,45 @@ if (Session::isLoggedIn('investor')) {
 $error = '';
 $success = '';
 
+
+// CSRF token generation
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$csrf_token = $_SESSION['csrf_token'];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = [
-        'full_name' => trim($_POST['full_name'] ?? ''),
-        'email' => trim($_POST['email'] ?? ''),
-        'phone' => trim($_POST['phone'] ?? ''),
-        'company_name' => trim($_POST['company_name'] ?? ''),
-        'investor_type' => $_POST['investor_type'] ?? 'individual',
-        'investment_range' => $_POST['investment_range'] ?? 'under_10k',
-        'password' => $_POST['password'] ?? ''
-    ];
-    
-    $confirm_password = $_POST['confirm_password'] ?? '';
-    $agree_terms = isset($_POST['agree_terms']);
-    
-    if (!$agree_terms) {
-        $error = 'You must agree to the Terms of Service and Privacy Policy';
-    } elseif ($data['password'] !== $confirm_password) {
-        $error = 'Passwords do not match';
-    } elseif (strlen($data['password']) < 8) {
-        $error = 'Password must be at least 8 characters';
+    // CSRF token validation
+    if (!isset($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        $error = 'Invalid CSRF token. Please refresh and try again.';
     } else {
-        $auth = new Auth();
-        $result = $auth->registerInvestor($data);
-        
-        if ($result['success']) {
-            $success = 'Account created successfully! You can now login.';
+        $data = [
+            'full_name' => htmlspecialchars(trim($_POST['full_name'] ?? '')),
+            'email' => filter_var(trim($_POST['email'] ?? ''), FILTER_VALIDATE_EMAIL),
+            'phone' => htmlspecialchars(trim($_POST['phone'] ?? '')),
+            'company_name' => htmlspecialchars(trim($_POST['company_name'] ?? '')),
+            'investor_type' => htmlspecialchars($_POST['investor_type'] ?? 'individual'),
+            'investment_range' => htmlspecialchars($_POST['investment_range'] ?? 'under_10k'),
+            'password' => $_POST['password'] ?? ''
+        ];
+        $confirm_password = $_POST['confirm_password'] ?? '';
+        $agree_terms = isset($_POST['agree_terms']);
+        if (!$agree_terms) {
+            $error = 'You must agree to the Terms of Service and Privacy Policy';
+        } elseif ($data['password'] !== $confirm_password) {
+            $error = 'Passwords do not match';
+        } elseif (strlen($data['password']) < 8) {
+            $error = 'Password must be at least 8 characters';
+        } elseif (!$data['email']) {
+            $error = 'Please enter a valid email address';
         } else {
-            $error = $result['message'];
+            $auth = new Auth();
+            $result = $auth->registerInvestor($data);
+            if ($result['success']) {
+                $success = 'Account created successfully! You can now login.';
+            } else {
+                $error = $result['message'];
+            }
         }
     }
 }
@@ -371,6 +382,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             
             <form class="signup-form" id="signupForm" method="POST" action="">
+                <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <?php if ($error): ?>
                 <div class="alert error" style="display: block;"><?php echo h($error); ?></div>
                 <?php endif; ?>

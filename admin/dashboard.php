@@ -21,7 +21,10 @@ $db = Database::getInstance();
 $pdo = $db->getConnection();
 
 // Get current section from URL
-$section = isset($_GET['section']) ? $_GET['section'] : 'dashboard';
+
+// Sanitize section input
+$allowed_sections = ['dashboard', 'users', 'investors', 'products', 'orders', 'investment_options', 'settings', 'stock', 'invoices'];
+$section = isset($_GET['section']) && in_array($_GET['section'], $allowed_sections) ? $_GET['section'] : 'dashboard';
 
 // Initialize stats
 $stats = [
@@ -59,33 +62,8 @@ if ($pdo) {
     }
 }
 
-// Section-specific data loading
-$section_data = [];
 
-switch ($section) {
-    case 'users':
-        $section_data['users'] = $db->fetchAll("SELECT * FROM users ORDER BY created_at DESC");
-        break;
-    case 'investors':
-        $section_data['investors'] = $db->fetchAll("SELECT * FROM investors ORDER BY created_at DESC");
-        break;
-    case 'products':
-        $section_data['products'] = $db->fetchAll("SELECT p.*, c.name as category_name FROM products p LEFT JOIN product_categories c ON p.category_id = c.id ORDER BY p.name");
-        $section_data['categories'] = $db->fetchAll("SELECT * FROM product_categories ORDER BY name");
-        break;
-    case 'orders':
-        $section_data['orders'] = $db->fetchAll("SELECT o.*, u.full_name as customer_name FROM orders o LEFT JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC");
-        break;
-    case 'investment_options':
-        $section_data['investment_options'] = $db->fetchAll("SELECT * FROM investment_options ORDER BY created_at DESC");
-        break;
-    case 'settings':
-        $section_data['settings'] = $db->fetchAll("SELECT * FROM settings ORDER BY setting_key");
-        break;
-    case 'stock':
-        $section_data['stock'] = $db->fetchAll("SELECT s.*, p.name as product_name, p.sku FROM stock s LEFT JOIN products p ON s.product_id = p.id ORDER BY s.date_added DESC");
-        break;
-}
+// Section-specific data loading (moved to section includes for maintainability)
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -95,6 +73,8 @@ switch ($section) {
     <title>Admin Dashboard - RxHub</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../assets/css/admin.css">
+        <link rel="stylesheet" href="../assets/css/rxhub-theme.css">
+    
     <style>
         :root {
             --primary: #9900cc;
@@ -431,6 +411,18 @@ switch ($section) {
                     break;
                 case 'stock':
                     include 'sections/stock.php';
+                    break;
+                case 'users':
+                    include 'sections/users.php';
+                    break;
+                case 'investors':
+                    include 'sections/investors.php';
+                    break;
+                case 'settings':
+                    include 'sections/settings.php';
+                    break;
+                case 'invoices':
+                    include 'sections/invoices.php';
                     break;
                 default:
                     include 'sections/overview.php';
